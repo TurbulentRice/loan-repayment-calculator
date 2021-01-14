@@ -1,45 +1,64 @@
 import React from 'react';
 import PriorityQueue from '../utility/priorityQueue.js'
-import LoanView from './LoanView.js'
-import LoanIndex from './LoanIndex';
+import LoanView from './views/LoanView.js'
+import LoanIndex from './index/LoanIndex';
 import { Button } from 'react-bootstrap';
 
 /*
-Main display container, housing
+Main info display container, housing
 1) LoanIndex - list of Loan objects currently held in App.js
 2) LoanView - chart, info, and controller of Loan branch projections
 
+Receives from props:
+1) Array of Loan objects from App state
+2) removeLoan() bound method for filtering out a loan (by reference)
+    from App state.loans
+
 Keeps track of in state:
-1) Index of currently selected Loan object in props
-  Dynamically keeps
+1) Index of currently selected Loan object in props.
+    This is to avoid referencing props in state.
+    Use getter this.currentlySelectedLoan to reference selected Loan directly.
+2) Toggle for PriorityQueueView vs LoanView
 */
 
-
-// Props:
-// Loans, removeLoan()
 class LoanDisplay extends React.Component {
   constructor(props) {
     super(props)
-    // Don't copy props!
-    // state.currentlySelected will only point to the index of
-    // currently selected Loan obj in props
     this.state = {
-      queueToggle: false,
-      currentlySelected: 0
+      currentlySelected: 0,
+      queueToggle: false
     }
-    
   }
 
-  // Passed to LoanIndex, receives reference to loan Obj to display
+  // Method for getting reference to currently selected loan
+  get currentlySelectedLoan() {
+    return this.props.loans[this.state.currentlySelected]
+  }
+  indexOfLoan(loanToFind) {
+    return this.props.loans.findIndex(loan => loan === loanToFind)
+  }
+
+  // Update state.currentlySelected with new index value.
+  // Passed down to LoanIndexItem
+  // Receives reference to loan Obj itself (this is to avoid unexpected behavior)
+  // If queueToggle is false, this will display the selected Loan in LoanView
+  // If queueToggle is true, this will highlight the loan in QueueView
   selectLoan = selectedLoan => {
-    this.setState({currentlySelected: this.props.loans.findIndex(loan => loan === selectedLoan)})
+    this.setState((prevState, props) => ({
+      currentlySelected: props.loans.findIndex(loan => loan === selectedLoan)
+    }))
   }
 
+  // Wrapper for App.removeLoan()
+  // Adjusts currentlySelected to reflect change in LoanIndex if necessary
   removeLoan = loan => {
-    // Call props.removeLoan
+    // If currentlySelected === 0 or loan to remove's index > currentlySelected, don't decrement
+    const shouldDecrement = !(!this.state.currentlySelected || (this.indexOfLoan(loan) > this.state.currentlySelected))
+    // This way we avoid uneccesary calls to setState and additional renders
+    shouldDecrement && this.setState(prevState => ({
+      currentlySelected: prevState.currentlySelected - 1
+    }))
     this.props.removeLoan(loan)
-    // Adjust currentlySelected to reflect change in LoanIndex
-    this.setState(prevState => ({currentlySelected: prevState.currentlySelected && prevState.currentlySelected - 1}))
   }
 
   toggleQueueView = () => {
@@ -55,12 +74,9 @@ class LoanDisplay extends React.Component {
           {(this.props.loans.length > 0) && <Button className="mt-2" block onClick={this.toggleQueueView} >Show all loans</Button>}
         </div>
 
-
         <LoanView currentLoan={
           this.state.queueToggle ? new PriorityQueue(this.props.loans)
-          : this.props.loans[this.state.currentlySelected]}/>
-
-        
+          : this.currentlySelectedLoan}/>
 
       </div>
       

@@ -1,9 +1,9 @@
-import React from 'react';
 import Plot from 'react-plotly.js';
-import Loan from '../utility/loan';
+import Loan from '../../utility/loan';
 // import Loan from './loan.js'
 // import {Button} from "react-bootstrap";
 
+// Sibling component to PriorityQueueView
 
 // Card containing graph and info tied to a loan object
 // Rather than keep state specific to the LoanView component obj,

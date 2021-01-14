@@ -18,7 +18,7 @@ class LoanEntry extends React.Component {
 
   /*
   Input handlers
-  In general, we don't want to confuse the utility data structures (Loan, priorityQueue)
+  In general, we don't want to confuse the utility data structures (Loan, PriorityQueue)
   To that end, ensure inputs are optimal for Loan object construction
   I.e. reject non-numbers
   */

@@ -9,22 +9,20 @@ class App extends React.Component {
   constructor() {
     super()
     /*
-    Loans in state will be identified by index in array? This is simplest
-    As opposed to empty object that is dynamically filled with title: Loan pairs
-    Advantage of empty Obj: adding new Loan with dup title will overwrite first,
-    and Loans can be accessed by this.state[title], rather than this.state.loans[index]
-    Advantage of Array: map/filter loan objs
+    App will hold all user's Loan objects in state, and pass down
+    references as props as needed.
+    
+    Provides methods for adding / removing Loan objs, which will update the
+    child components who are displaying them.
     */
     this.state = {
       loans: []
       }
   }
 
-  // Passed down to LoanEntry form via props
+  // Passed down to LoanEntry via props
   // Receives loan ingredients, creates + stores new Loan obj in state
   submitNewLoan = (loanIngredients) => {
-    // This is where some optimizing can happen before Loan construction
-    // I.E. check ingredients for empties, make sure what we pass is good
     this.setState(prevState => ({loans: [...prevState.loans, new Loan(loanIngredients)]}))
   }
 
