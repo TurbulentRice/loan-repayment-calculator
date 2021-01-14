@@ -9,8 +9,7 @@ export default class PriorityQueue {
 
     // Primary attribute getters/setters
     set monthlyBudget (budget) {
-        this._monthlyBudget = !budget ? this.minMonthlyBudget
-            : Loan.round(budget);
+        this._monthlyBudget = Loan.round(budget) || this.derivedMonthlyBudget;
     }
     get monthlyBudget () {
         return this._monthlyBudget;
@@ -41,8 +40,29 @@ export default class PriorityQueue {
     get avgInterestRate() {
         return Loan.round(this.Queue.reduce((a, b) => a + b.interestRate, 0) / this.size);
     }
+    // Queue payoff efficiency tester methods
+    get avgPercentPaidToInterest() {
+        return Loan.round((this.interestPaid / this.totalPaid) * 100);
+    }
+    get avgPercentPaidToPrincipal() {
+        return Loan.round((this.principalPaid / this.totalPaid) * 100);
+    }
+    // Average principalEfficiency value across all Loans in Queue
+    get avgPrincipalEfficiency() {
+        return Loan.round(this.Queue.reduce((a, b) => a + b.principalEfficiency, 0) / this.size); 
+    }
+    // Total principal paid / total interest paid (likely same as above)
+    get normalPrincipalEfficiency() {
+        return Loan.round(this.principalPaid / this.interestPaid); 
+    }
+
+
     get minMonthlyBudget() {
         return Loan.round(this.Queue.reduce((a, b) => a + b.minPayment, 0));
+    }
+    // Monthly budget derived from all Loan obj payment amts
+    get derivedMonthlyBudget() {
+        return Loan.round(this.Queue.reduce((a, b) => a + b.paymentAmount, 0));
     }
 
     get queueInfo() {

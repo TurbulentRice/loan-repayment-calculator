@@ -1,16 +1,21 @@
 // Loan class
 
+/*
+Terms:
+    "Solvable loan": A Loan object that can eventually be paid
+    off with its current balance/interest/payment values,
+    I.E can call payOff() or solveInPlace() without error or infinte loop 
+*/
+
 // Takes an object in form:
 // {startBalance: , interestRate: , paymentAmount: , title:, term: }
 export default class Loan {
-    constructor({startBalance, interestRate, paymentAmount, title, term}) {
+    constructor({ startBalance, interestRate, paymentAmount, title, term }) {
         // Loan title and term (in months)
         this.title = title || "Untitled";
-        this.term = term || 12;
+        this.term = term || 0;
         // Primary attributes
         this.startBalance = startBalance;
-        this.interestRate = interestRate;
-        this.paymentAmount = paymentAmount;
         // Payment history object (state)
         this.paymentHistory = {
             balance: [this.startBalance],
@@ -18,6 +23,8 @@ export default class Loan {
             interest: [0],
             paymentNum: [0]
         }
+        this.interestRate = interestRate;
+        this.paymentAmount = paymentAmount;
     }
 
     // Static rounding function - in place of Decimal object
@@ -26,11 +33,11 @@ export default class Loan {
     }
 
     // Primary attribute getter/setters
-    // These will allow us safer editing of properties
+    // These will allow safe editing of properties and reduce unexpected behavior
 
     // Start Balance
     set startBalance(balance) {
-        this._startBalance = (balance === undefined) ? 0
+        this._startBalance = (balance === undefined || balance === '') ? 0
             : Loan.round(balance);
     }
     get startBalance() {
@@ -39,16 +46,18 @@ export default class Loan {
 
     // Interest Rate
     set interestRate(rate) {
-        this._interestRate = Loan.round(rate) || 5;
+        this._interestRate = (rate === undefined || rate === '') ? 0
+            : Loan.round(rate);
     }
     get interestRate() {
         return this._interestRate;
     }
 
     // Payment Amount
+    // If this is too low then it will be unsolveable
+    // 
     set paymentAmount(amount) {
-        this._paymentAmount = amount ? Loan.round(amount)
-        : Loan.round(this.minPayment) || 0
+        this._paymentAmount = Loan.round(amount) || Loan.round(this.minPayment);
     }
     get paymentAmount() {
         return this._paymentAmount
@@ -56,13 +65,24 @@ export default class Loan {
 
     // Utility property getters
 
+    /* minPayment()
+        Returns either:
+            1) Payment necessary to complete Loan on time (based on term & ir)
+            2) Absolute minimum payment necessary to yield a solvable Loan
+        - If interestRate is 0, this will yield a divide by 0 error
+        - If term is 0 or omitted, this will not yield a helpful number
+        In either of these cases, minPayment will default to interestDue + 1
+        This is useful behavior because we usually call this to determine
+        a reasonable paymentAmount that will not throw an error or result
+        in an unsolvable loan (one that will never be paid off)
+    */
     get minPayment() {
         // Discount factor = {[(r+1)n]-1}/[r(1+r)^n]
+        const [r, n] = [this.monthlyIR, this.term]
         const discountFactor = () => {
-            const [r, n] = [this.monthlyIR, this.term]
             return (((r + 1) ** n) - 1) / (r * (r + 1) ** n)
         }
-        return this.startBalance / discountFactor()
+        return (r && n) ? (this.startBalance / discountFactor()) : this.interestDue + 1
     }
     get currentPaymentNum() {
         return this.paymentHistory.paymentNum[this.paymentHistory.paymentNum.length-1];
@@ -84,6 +104,17 @@ export default class Loan {
     }
     get totalPaid() {
         return this.interestPaid + this.principalPaid;
+    }
+    // Loan efficiency testing methods
+    // If no payments made, return 0 to avoid divide by 0 error
+    get percentPaidToInterest() {
+        return !this.totalPaid ? 0 : Loan.round((this.interestPaid / this.totalPaid) * 100)
+    }
+    get percentPaidToPrincipal() {
+        return !this.totalPaid ? 0 : Loan.round((this.principalPaid / this.totalPaid) * 100)
+    }
+    get principalEfficiency() {
+        return !this.totalPaid ? 0 : Loan.round(this.principalPaid / this.interestPaid)
     }
     get loanInfo() {
         return {
@@ -115,7 +146,7 @@ export default class Loan {
         // Get interest due, subtract from principal payment
         let [interestPayment, principalPayment] = [this.interestDue, this.paymentAmount - this.interestDue];
 
-        // Never overpay
+        // Never overpay, but may continue to pay 0
         principalPayment > this.currentBalance && (principalPayment = this.currentBalance);
 
         const fwdBalance = this.currentBalance - principalPayment
