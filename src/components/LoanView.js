@@ -1,5 +1,6 @@
 import React from 'react';
 import Plot from 'react-plotly.js';
+import Loan from '../utility/loan';
 // import Loan from './loan.js'
 // import {Button} from "react-bootstrap";
 
@@ -10,24 +11,30 @@ import Plot from 'react-plotly.js';
 // Use LoanView to model a generic loan obj with whatever properties
 
 
-const LoanView = ({ loan }) => {
-  // Logic: if loan is missing/incomplete, do not continue
-  if (!loan) return <div></div> ;
+// We want LoanView to handle not only Loan objects, but PriorityQueues as well
+const LoanView = ({ currentLoan }) => {
+  // Logic: if currentLoan is missing/incomplete, do not continue
+  if (!currentLoan) return <div></div> ;
+
+  // Check Loan vs PriorityQueue
+  const isLoan = currentLoan instanceof Loan;
 
 
+  // Takes a Loan object, makes traces
   const makeLoanTrace = loan => [{
     x: [...loan.paymentHistory.paymentNum],
     y: [...loan.paymentHistory.balance],
 
   }]
+
+  // Takes a PriorityQueue object,
+  // reduces to list of loan trace objects
+  const makePriorityQueueTrace = queue => queue.Queue.reduce((a, b) => [...a, ...makeLoanTrace(b)], [])
   
 
   // const { startBalance, interestRate, paymentAmount, title, term } = loan;
   const loanInfo = (loan) => (
     <section>
-      <div className="row">
-        
-      </div>
       <p>Title: {loan.title}</p>
       <p>Start balance: ${loan.startBalance}</p>
       <p>Interest rate: {loan.interestRate}% APR</p>
@@ -36,18 +43,23 @@ const LoanView = ({ loan }) => {
       <p>Payments made: {loan.currentPaymentNum}</p>
     </section>
   )
+  const priorityQueueInfo = (queue) => (
+    <section>
+      {Object.entries(queue.queueInfo).map(([key, value], index) => <p key={index}>{key}: {value}</p>)}
+    </section>
+  )
 
   return (
     <div className="loan-view border rounded col-8 mt-2 pl-0 pb-0 pt-3">
       <div className="row">
         <div className="col-8">
           <Plot
-          data={makeLoanTrace(loan.solveInPlace())}
+          data={isLoan ? makeLoanTrace(currentLoan.solveInPlace()) : makePriorityQueueTrace(currentLoan.avalanche())}
 
           />
         </div>
         <div className="loan-info col-4 d-flex justify-content-right">
-          {loanInfo(loan.solveInPlace())}
+          {isLoan ? loanInfo(currentLoan.solveInPlace()) : priorityQueueInfo(currentLoan.avalanche())}
         </div>
       </div>
       

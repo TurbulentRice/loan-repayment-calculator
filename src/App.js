@@ -1,56 +1,38 @@
 import React from 'react';
 import './App.css';
-import Loan from './loan.js'
-import LoanEntry from './LoanEntry.js'
-import LoanDisplay from './LoanDisplay';
+import Loan from './utility/loan.js'
+import LoanEntry from './components/LoanEntry.js'
+import LoanDisplay from './components/LoanDisplay.js';
 
 
 class App extends React.Component {
-  // state here will represent:
-  // Form values and Loan data model
-  // pass down values as props as necessary
-  constructor (props) {
-    super(props)
+  constructor() {
+    super()
+    /*
+    Loans in state will be identified by index in array? This is simplest
+    As opposed to empty object that is dynamically filled with title: Loan pairs
+    Advantage of empty Obj: adding new Loan with dup title will overwrite first,
+    and Loans can be accessed by this.state[title], rather than this.state.loans[index]
+    Advantage of Array: map/filter loan objs
+    */
     this.state = {
-      title: '',
-      startBalance: '',
-      interestRate: '',
-      paymentAmount: '',
-      term: '',
       loans: []
       }
   }
 
-  // Single change state function, takes a k/v pair and sets state
-  updateState = (stateObject) => {
-    this.setState(stateObject)
+  // Passed down to LoanEntry form via props
+  // Receives loan ingredients, creates + stores new Loan obj in state
+  submitNewLoan = (loanIngredients) => {
+    // This is where some optimizing can happen before Loan construction
+    // I.E. check ingredients for empties, make sure what we pass is good
+    this.setState(prevState => ({loans: [...prevState.loans, new Loan(loanIngredients)]}))
   }
 
-  // Snapshot state data, create + store Loan obj
-  submitNewLoan = () => {
-    const newLoan = new Loan(
-      this.state.startBalance,
-      this.state.interestRate,
-      this.state.paymentAmount,
-      this.state.title,
-      this.state.term)
-    // add loan to state and reset fields
-    this.updateState({
-      title: '',
-      startBalance: '',
-      interestRate: '',
-      paymentAmount: '',
-      term: '',
-      loans: [...this.state.loans, newLoan]
-    })
-  }
-
+  // Passed down to LoanDisplay -> LoanIndex -> LoanIndexItem via props,
+  // Receives reference to loan obj, removes Loan obj in state that matches ref
   removeLoan = (loanToDelete) => {
-    this.updateState({loans: this.state.loans.filter(loan => loan !== loanToDelete)})
+    this.setState(prevState => ({loans: prevState.loans.filter(loan => loan !== loanToDelete)}))
   }
-
-
-
 
   render() {
     return (
@@ -61,13 +43,16 @@ class App extends React.Component {
 
         <div className="row">
           <div className="loanEntryCol col">
-            <LoanEntry 
-              submitNewLoan={this.submitNewLoan}
-              updateState={this.updateState}
-              values={this.state}/>
+
+            <LoanEntry submitNewLoan={this.submitNewLoan}/>
+
           </div>
         </div>
-        <LoanDisplay loans={this.state.loans}/>
+
+        <LoanDisplay 
+          loans={this.state.loans}
+          removeLoan={this.removeLoan}/>
+
       </div>
     );
   }

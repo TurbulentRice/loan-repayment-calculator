@@ -9,7 +9,7 @@ export default class PriorityQueue {
 
     // Primary attribute getters/setters
     set monthlyBudget (budget) {
-        this._monthlyBudget = (budget === undefined) ? 0
+        this._monthlyBudget = !budget ? this.minMonthlyBudget
             : Loan.round(budget);
     }
     get monthlyBudget () {
@@ -27,24 +27,35 @@ export default class PriorityQueue {
         return this.Queue.reduce((a, b) => a + b.currentPaymentNum, 0);
     }
     get principalPaid() {
-        return this.Queue.reduce((a, b) => a + b.principalPaid, 0);
+        return Loan.round(this.Queue.reduce((a, b) => a + b.principalPaid, 0));
     }
     get interestPaid() {
-        return this.Queue.reduce((a, b) => a + b.interestPaid, 0);
+        return Loan.round(this.Queue.reduce((a, b) => a + b.interestPaid, 0));
     }
     get totalPaid() {
-        return this.Queue.reduce((a, b) => a + b.totalPaid, 0);
+        return Loan.round(this.Queue.reduce((a, b) => a + b.totalPaid, 0));
     }
+    get startBalance() {
+        return this.Queue.reduce((a, b) => a + b.startBalance, 0);
+    }
+    get avgInterestRate() {
+        return Loan.round(this.Queue.reduce((a, b) => a + b.interestRate, 0) / this.size);
+    }
+    get minMonthlyBudget() {
+        return Loan.round(this.Queue.reduce((a, b) => a + b.minPayment, 0));
+    }
+
     get queueInfo() {
         return {
             title: this.title,
             startBalance: this.startBalance,
-            interestRate: this.interestRate,
+            avgInterestRate: this.avgInterestRate,
             totalPaid: this.totalPaid,
             interestPaid: this.interestPaid,
             principalPaid: this.principalPaid
         }
     }
+
 
     // Payment configuration methods
     isComplete() {
@@ -110,22 +121,22 @@ export default class PriorityQueue {
             this.Queue[this.size-1].paymentAmount += remainder
         }
 
-        (key === 'cascade' || key =='iceSlide')
+        (key === 'cascade' || key ==='iceSlide')
             ? spreadRemainder() : targetRemainder()
     }
 
     // Algorithm methods
     
     // Return a config object ticket, used by debt solve to customize solve
-    queueConfig(strategyName) {
-        const config = {
-            avalanche: {},
-            blizzard: {},
-            snowball: {},
-            cascade: {},
-            iceSlide: {}  
-        }
-    }
+    // queueConfig(strategyName) {
+    //     const config = {
+    //         avalanche: {},
+    //         blizzard: {},
+    //         snowball: {},
+    //         cascade: {},
+    //         iceSlide: {}  
+    //     }
+    // }
 
     // Main algo driver, solve-in-place, returns completed PriorityQueue
     debtSolve(key, minimum) {
@@ -155,7 +166,6 @@ export default class PriorityQueue {
 
                 // Make one payment for each loan in temp
                 tempQueue.Queue.forEach(loan => loan.payMonth())
-                console.log(tempQueue)
             }
             // Add completed loans to completed
             completedQueue.addLoans(tempQueue.Queue.filter(loan => loan.isComplete()))
