@@ -16,8 +16,7 @@ code {
   background-color: rgb(235, 235, 235);
 }
 
-.loan-view {
-  text-align: left;
+.view-parent {
   font-size: 12px;
   padding: 0.5rem;
 }

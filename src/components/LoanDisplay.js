@@ -1,6 +1,6 @@
 import React from 'react';
-import PriorityQueue from '../utility/priorityQueue.js'
 import LoanView from './views/LoanView.js'
+import QueueView from './views/QueueView.js'
 import LoanIndex from './index/LoanIndex';
 import { Button } from 'react-bootstrap';
 
@@ -69,14 +69,21 @@ class LoanDisplay extends React.Component {
     return (
       <div className="loan-display row p-2 m-0">
 
-        <div className="col-4 p-2 m-0">
+        <div className="col-4 p-2">
           <LoanIndex loans={this.props.loans} selectLoan={this.selectLoan} removeLoan={this.removeLoan}/>
           {(this.props.loans.length > 0) && <Button className="mt-2" block onClick={this.toggleQueueView} >Show all loans</Button>}
         </div>
 
-        <LoanView currentLoan={
-          this.state.queueToggle ? new PriorityQueue(this.props.loans)
-          : this.currentlySelectedLoan}/>
+        <div className="col-8 p-2">
+          { // If queueToggle is on, render a QueueView with all loans from props
+            // otherwise render a single LoanView with currentlySelectedLoan
+            this.state.queueToggle
+            ? <QueueView allLoans={this.props.loans}/>
+            : <LoanView currentLoan={this.currentlySelectedLoan} />
+          }
+        </div>
+
+        
 
       </div>
       
@@ -84,4 +91,4 @@ class LoanDisplay extends React.Component {
   }
 }
 
-export default LoanDisplay
+export default LoanDisplay;

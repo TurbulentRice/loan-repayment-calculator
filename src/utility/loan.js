@@ -1,22 +1,33 @@
-// Loan class
+/* 
+******************************
+Loan class data structure
+******************************
+- Models properties of an installment loan, including:
+    1) Minimum payment calculated from interestRate and term
+    2) Interest capitalization when monthly payment cannot cover interestDue
+- Tracks payment history
+- Provides statistics about payments:
+    1) percentPaidToPrincipal
+    2) percentPaidToInterest
+    3) principalEfficiency (ratio of principal:interest paid)
+- Methods for modelling payments:
+    1) payMonth() - install one payment based on paymentAmount, monthlyIR
+    2) payOff() - install payments until loan isComplete() (currentBalance = 0)
+    3) solveInPlace() - 
 
-/*
 Terms:
-    "Solvable loan": A Loan object that can eventually be paid
-    off with its current balance/interest/payment values,
-    I.E can call payOff() or solveInPlace() without error or infinte loop 
+    "Solvable loan": A Loan object on which payOff() or solveInPlace() can be
+    called without error or infinte loop (can be paid off under current conditions).
 */
 
-// Takes an object in form:
-// {startBalance: , interestRate: , paymentAmount: , title:, term: }
 export default class Loan {
     constructor({ startBalance, interestRate, paymentAmount, title, term }) {
         // Loan title and term (in months)
         this.title = title || "Untitled";
         this.term = term || 0;
-        // Primary attributes
+        // Primary attributes *the order here matters*
         this.startBalance = startBalance;
-        // Payment history object (state)
+        // Payment history object
         this.paymentHistory = {
             balance: [this.startBalance],
             principal: [0],
@@ -32,8 +43,10 @@ export default class Loan {
         return Math.round(number * 100) / 100;
     }
 
+    // **********************************
     // Primary attribute getter/setters
-    // These will allow safe editing of properties and reduce unexpected behavior
+    // **********************************
+    // - Allow safe editing of properties and reduce unexpected behavior
 
     // Start Balance
     set startBalance(balance) {
@@ -54,8 +67,6 @@ export default class Loan {
     }
 
     // Payment Amount
-    // If this is too low then it will be unsolveable
-    // 
     set paymentAmount(amount) {
         this._paymentAmount = Loan.round(amount) || Loan.round(this.minPayment);
     }
@@ -63,18 +74,19 @@ export default class Loan {
         return this._paymentAmount
     }
 
+    // ******************************
     // Utility property getters
+    // ******************************
 
-    /* minPayment()
+    /* minPayment() notes
         Returns either:
             1) Payment necessary to complete Loan on time (based on term & ir)
             2) Absolute minimum payment necessary to yield a solvable Loan
-        - If interestRate is 0, this will yield a divide by 0 error
-        - If term is 0 or omitted, this will not yield a helpful number
+        - If interestRate is 0, discountFactor() will yield a divide by 0 error
+        - If term is 0 or omitted, discountFactor() will not yield a helpful number
         In either of these cases, minPayment will default to interestDue + 1
-        This is useful behavior because we usually call this to determine
-        a reasonable paymentAmount that will not throw an error or result
-        in an unsolvable loan (one that will never be paid off)
+        This is useful because we will rely on minPayment() to, in all cases,
+        return a "reasonable" paymentAmount that will result in a solvable Loan.
     */
     get minPayment() {
         // Discount factor = {[(r+1)n]-1}/[r(1+r)^n]
@@ -118,19 +130,23 @@ export default class Loan {
     }
     get loanInfo() {
         return {
-            title: this.title,
-            startBalance: this.startBalance,
-            interestRate: this.interestRate,
-            totalPaid: this.totalPaid,
-            interestPaid: this.interestPaid,
-            principalPaid: this.principalPaid
+            'Title': this.title,
+            'Start balance': this.startBalance,
+            'Payment amount': this.paymentAmount,
+            'Interest rate': this.interestRate,
+            'Total paid': this.totalPaid,
+            'Principal paid': this.principalPaid,
+            'Interest Paid': this.interestPaid,
+            'Payments made': this.currentPaymentNum,
+            'Principal payment %': this.percentPaidToPrincipal,
+            'Interest payment %': this.percentPaidToInterest,   
         }
     }
 
     // Payment methods
 
     // This should ideally check balance === 0, but until we have
-    // precise Decimal math, can't be sure it will come out to 0
+    // precise Decimal math, can't be sure payMonth() will never overpay
     isComplete() {
         return (this.currentBalance <= 0);
     }

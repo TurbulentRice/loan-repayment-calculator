@@ -15,6 +15,18 @@ export default class PriorityQueue {
         return this._monthlyBudget;
     }
 
+    // Monthly budget tools
+
+    // Monthly budget derived from all loans' minimum payments
+    // Ignores currently set paymentAmount for each loan (not reccomended)
+    get minMonthlyBudget() {
+        return Loan.round(this.Queue.reduce((a, b) => a + b.minPayment, 0));
+    }
+    // Monthly budget derived from all Loan obj payment amts
+    get derivedMonthlyBudget() {
+        return Loan.round(this.Queue.reduce((a, b) => a + b.paymentAmount, 0));
+    }
+
     // Utility methods
     get size() {
         return this.Queue.length;
@@ -57,22 +69,19 @@ export default class PriorityQueue {
     }
 
 
-    get minMonthlyBudget() {
-        return Loan.round(this.Queue.reduce((a, b) => a + b.minPayment, 0));
-    }
-    // Monthly budget derived from all Loan obj payment amts
-    get derivedMonthlyBudget() {
-        return Loan.round(this.Queue.reduce((a, b) => a + b.paymentAmount, 0));
-    }
-
+    // Overview info about these Loans
     get queueInfo() {
         return {
-            title: this.title,
-            startBalance: this.startBalance,
-            avgInterestRate: this.avgInterestRate,
-            totalPaid: this.totalPaid,
-            interestPaid: this.interestPaid,
-            principalPaid: this.principalPaid
+            'Title': this.title,
+            'Start balance': this.startBalance,
+            'Monthly budget': this.monthlyBudget,
+            'Avg interest rate': this.avgInterestRate,
+            'Total paid': this.totalPaid,
+            'Principal paid': this.principalPaid,
+            'Interest Paid': this.interestPaid,
+            'Duration': this.duration,
+            'Avg principal %': this.avgPercentPaidToPrincipal,
+            'Avg interest %': this.avgPercentPaidToInterest,   
         }
     }
 
@@ -117,7 +126,10 @@ export default class PriorityQueue {
             setPaymentFunc[target](loan)
             budget -= loan.paymentAmount
         })
-        return budget;
+        // We have to round because otherwise floating point imprecision
+        // can cause this to be a negative number when it should be 0
+        // 0 is OK because minPayments should still yield solvable Loans
+        return Loan.round(budget);
     }
 
     // Determine and set paymentAmounts for each loan
@@ -177,7 +189,7 @@ export default class PriorityQueue {
 
                 // Set payments and get remainder, handle negative
                 let remainder = tempQueue.setPayments(minimum)
-                if (remainder <= 0) {
+                if (remainder < 0) {
                     alert('Budget cannot cover payments')
                     return this;
                 }

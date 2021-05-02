@@ -2,11 +2,14 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
+import { LoansProvider } from './contexts/LoansContext'
 // import reportWebVitals from './reportWebVitals';
 
 ReactDOM.render(
   <React.StrictMode>
-    <App />
+    <LoansProvider>
+      <App />
+    </LoansProvider>
   </React.StrictMode>,
   document.getElementById('root')
 );

@@ -1,68 +1,41 @@
-import Plot from 'react-plotly.js';
-import Loan from '../../utility/loan';
-// import Loan from './loan.js'
-// import {Button} from "react-bootstrap";
+// import Loan from '../../utility/loan';
+import LinePlot from './viewChildren/ModelPlot.js'
+import InfoCard from './viewChildren/InfoCard.js'
 
-// Sibling component to PriorityQueueView
+// *VIEW* component
+// Houses *MODEL* in 
 
+
+// Sibling component to QueueView
+
+// Receives currentlySelected Loan via props
 // Card containing graph and info tied to a loan object
 // Rather than keep state specific to the LoanView component obj,
 // model this separately using purely the Loan and PriorityQueue data structures
 // Use LoanView to model a generic loan obj with whatever properties
-
-
-// We want LoanView to handle not only Loan objects, but PriorityQueues as well
 const LoanView = ({ currentLoan }) => {
+
   // Logic: if currentLoan is missing/incomplete, do not continue
-  if (!currentLoan) return <div></div> ;
+  if (!currentLoan) return <div></div>;
 
-  // Check Loan vs PriorityQueue
-  const isLoan = currentLoan instanceof Loan;
-
+  // Otherwise, make a solved Loan to display
+  // Depending on Tool toggle, this can 
+  const loanToDisplay = currentLoan.solveInPlace();
 
   // Takes a Loan object, makes traces
   const makeLoanTrace = loan => [{
     x: [...loan.paymentHistory.paymentNum],
     y: [...loan.paymentHistory.balance],
-
   }]
 
-  // Takes a PriorityQueue object,
-  // reduces to list of loan trace objects
-  const makePriorityQueueTrace = queue => queue.Queue.reduce((a, b) => [...a, ...makeLoanTrace(b)], [])
-  
-
-  // const { startBalance, interestRate, paymentAmount, title, term } = loan;
-  const loanInfo = (loan) => (
-    <section>
-      <p>Title: {loan.title}</p>
-      <p>Start balance: ${loan.startBalance}</p>
-      <p>Interest rate: {loan.interestRate}% APR</p>
-      <p>Payment amount: ${loan.paymentAmount}</p>
-      <p>Term: {loan.term} months ({loan.term/12} years)</p>
-      <p>Payments made: {loan.currentPaymentNum}</p>
-    </section>
-  )
-  const priorityQueueInfo = (queue) => (
-    <section>
-      {Object.entries(queue.queueInfo).map(([key, value], index) => <p key={index}>{key}: {value}</p>)}
-    </section>
-  )
-
   return (
-    <div className="loan-view border rounded col-8 mt-2 pl-0 pb-0 pt-3">
-      <div className="row">
-        <div className="col-8">
-          <Plot
-          data={isLoan ? makeLoanTrace(currentLoan.solveInPlace()) : makePriorityQueueTrace(currentLoan.avalanche())}
+    
+    <div className="view-parent border rounded">
 
-          />
-        </div>
-        <div className="loan-info col-4 d-flex justify-content-right">
-          {isLoan ? loanInfo(currentLoan.solveInPlace()) : priorityQueueInfo(currentLoan.avalanche())}
-        </div>
-      </div>
-      
+      <InfoCard info={loanToDisplay.loanInfo}/>
+
+      <LinePlot plotData={makeLoanTrace(loanToDisplay)}/>  
+        
     </div>
     
   )
